@@ -1,0 +1,436 @@
+*** NUMBER DISPLAY OBJECT ***
+
+/**
+ * The NumberDisplay class represents a digital number display that can hold
+ * values from zero to a given limit. The limit can be specified when creating
+ * the display. The values range from zero (inclusive) to limit-1. If used,
+ * for example, for the seconds on a digital clock, the limit would be 60, 
+ * resulting in display values from 0 to 59. When incremented, the display 
+ * automatically rolls over to zero when reaching the limit.
+ * 
+ * @author Leonardo Paz
+ * @version 2017.09.19
+ */
+public class NumberDisplay
+{
+    private int limit;
+    private int value;
+
+    /**
+     * Constructor for objects of class NumberDisplay.
+     * Set the limit at which the display rolls over.
+     */
+    public NumberDisplay(int rollOverLimit)
+    {
+        limit = rollOverLimit;
+        value = 0;
+    }
+
+    /**
+     * Return the current value.
+     */
+    public int getValue()
+    {
+        return value;
+    }
+
+    /**
+     * Return the display value (that is, the current value as a two-digit
+     * String. If the value is less than ten, it will be padded with a leading
+     * zero).
+     */
+    public String getDisplayValue()
+    {
+        if(value < 10) {
+            return "0" + value;
+        }
+        else {
+            return "" + value;
+        }
+    }
+
+    /**
+     * Set the value of the display to the new specified value. If the new
+     * value is less than zero or over the limit, do nothing.
+     */
+    public void setValue(int replacementValue)
+    {
+        if((replacementValue >= 0) && (replacementValue < limit)) {
+            value = replacementValue;
+        }
+    }
+
+    /**
+     * Increment the display value by one, rolling over to zero if the
+     * limit is reached.
+     */
+    public void increment()
+    {
+        value = (value + 1) % limit;
+  
+    }
+}
+
+*** CLOCKDISPLAY12 CLASS *** 
+
+/**
+ * The ClockDisplay12 class implements a digital clock display for a
+ * 12 hour clock. The clock shows hours and minutes. The 
+ * range of the clock is 12:00am (midnight) to 11:59pm (one minute before 
+ * midnight).
+ * 
+ * The clock display receives "ticks" (via the timeTick method) every minute
+ * and reacts by incrementing the display. This is done in the usual clock
+ * fashion: the hour increments when the minutes roll over to zero.
+ * 
+ * @author Leonardo Paz
+ * @version 2017.09.19
+ */
+public class ClockDisplay12
+{
+    private NumberDisplay hours;
+    private NumberDisplay minutes;
+    private String displayString;    // simulates the actual display
+    private static final String AM = "a.m.";
+    private static final String PM = "p.m.";
+    private String time_of_day;
+    /**
+     * Constructor for ClockDisplay objects. This constructor 
+     * creates a new clock set at 12:00am.
+     */
+    public ClockDisplay12()
+    {
+        hours = new NumberDisplay(12);
+        minutes = new NumberDisplay(60);
+        updateDisplay();
+        time_of_day = AM;
+    }
+
+    /**
+     * Constructor for ClockDisplay objects. This constructor
+     * creates a new clock set at the time specified by the 
+     * parameters.
+     * @param int hour, hours to set the time to
+     * @param int minute, minutes to set time to
+     * @param String am_or_pm, declaring wether it is am or pm
+     */
+    public ClockDisplay12(int hour, int minute, String am_or_pm)
+    {
+        hours = new NumberDisplay(12);
+        minutes = new NumberDisplay(60);
+        setTime(hour, minute, am_or_pm);
+        if (hour == 12) {
+            hours.setValue(0);
+        }
+    }
+
+    /**
+     * This method should get called once every minute - it makes
+     * the clock display go one minute forward.
+     */
+    public void timeTick()
+    {
+        minutes.increment();
+        if ((minutes.getValue() == 0)) {
+            if (hours.getValue() == 11) {
+                hours.setValue(0);
+                if (time_of_day.equals(AM)) {
+                    time_of_day = PM;
+                }
+                else {
+                    time_of_day = AM;
+                }
+            }
+            else {
+                hours.increment();
+            }
+        }
+        updateDisplay();
+    }
+
+    /**
+     * Set the time of the display to the specified hour and
+     * minute.
+     * @param int hour, the hours to set time to
+     * @param int minute, the minutes to set time to
+     * @param String am_or_pm, declaring wether it is am or pm
+     */
+    public void setTime(int hour, int minute, String am_or_pm)
+    {
+        hours.setValue(hour); 
+        if (hour == 12) {
+            hours.setValue(0);
+        }
+        minutes.setValue(minute);
+        if (am_or_pm.equals(PM)) {
+            time_of_day = PM;
+        }
+        else {
+            time_of_day = AM;
+        }
+        updateDisplay();
+    }
+
+    /**
+     * Return the current time of this display in the format HH:MM.
+     */
+    public String getTime()
+    {
+        return displayString;
+    }
+    
+    /**
+     * Update the internal string that represents the display.
+     */
+    private void updateDisplay()
+    {
+        if (hours.getValue() < 10) {
+            if (hours.getValue() == 0) {
+            displayString = "12:" + minutes.getDisplayValue() + time_of_day;
+            }
+            else {
+            displayString = Integer.toString(hours.getValue()) + ":" + minutes.getDisplayValue() + time_of_day;
+            }   
+        }
+        else {
+            displayString = hours.getDisplayValue() + ":" + 
+                minutes.getDisplayValue() + time_of_day;
+        }
+    }
+}
+
+*** ALARM CLASS ***
+
+/**
+ * The Alarm class implements the ClockDisplay12 class by creating
+ * an alarm object. It has a boolean to say if the alarm is on or off.
+ *
+ * The alarm can be turned on or off, set to a certain time,
+ * and the user can see what time it is set at.
+ * 
+ * @author Leonardo Paz
+ * @version 2017.09.19
+ */
+public class Alarm
+{
+    private boolean alarmOn;
+    private ClockDisplay12 clock;
+    /**
+     * Constructor for objects of class Alarm. This constructor
+     * creates a new alarm that has a clock set at midnight and
+     * alarm is off
+     */
+    public Alarm()
+    {
+        clock = new ClockDisplay12();
+        alarmOn = false;
+    }
+    
+    /**
+     * Constructor for objects of class Alarm. This constructor
+     * creates a new alarm that has a clock set at the
+     * specified hours, minutes, am or pm, and whether
+     * it is on or off.
+     * 
+     * @param int hour  hours to set time to
+     * @param int minute  minutes to set time to
+     * @param String am_or_pm  set the time to am or pm
+     * @param boolean OnOrOff  set the alarm on or off
+     * 
+     */
+    public Alarm(int hour, int minute, String am_or_pm, boolean OnOrOff)
+    {
+        clock = new ClockDisplay12(hour, minute, am_or_pm);
+        alarmOn = OnOrOff;
+    }
+    
+    /**
+     * Sets the time for when the alarm is
+     *
+     * @param int hour  hours to set alarm to
+     * @param int minute    minutes to set alarm to
+     * @param String am_or_pm sets the alarm to am or pm
+     * 
+     */
+    public void setTime(int hour, int minute, String am_or_pm)
+    {
+        clock.setTime(hour, minute, am_or_pm); // sets alarm time
+    }
+    
+    /**
+     * Turns the alarm on
+     */
+    public void turnOn()
+    {
+        alarmOn = true;
+    }
+    
+    /**
+     * Turns the alarm off 
+     */
+    public void turnOff()
+    {
+        alarmOn = false;
+    }
+    
+    /**
+     * Gets the alarm time it is set at
+     * @return String returns a string displaying the time the alarm is set at
+     */
+    public String getTime()
+    {
+        return clock.getTime();
+    }
+    
+    /**
+     * Returns true if the alarm is set
+     * @return boolean  returns true if alarm is on
+     */
+    public boolean isSet()
+    {
+        return alarmOn;
+    }
+}
+
+*** ALARMCLOCK CLASS *** 
+
+/**
+ * The AlarmClock class implements an Alarm class object and a ClockDisplay12 class object.
+ * The clock is a ClockDisplay12 object and keeps track of the current time.
+ * The alarm is an Alarm object and can set a time for an alarm and has a boolean stating
+ * if the alarm is on or off.
+ * 
+ * The AlarmClock class can have different times for clock and the alarm time. It has
+ * a method that invrements the time every minute and sets the alarm off if it is the
+ * same time as the alarm and the alarm is on. The alarm can be turned on or off. The
+ * time of the clock and alarm can both be displayed. There is method that check if 
+ * the alarm is on or off.
+ *
+ * @author Leonardo Paz
+ * @version 2017.09.19
+ */
+public class AlarmClock
+{
+    // instance variables - replace the example below with your own
+    private ClockDisplay12 clock;
+    private Alarm alarm;
+
+    /**
+     * Constructor for objects of class AlarmClock. This 
+     * constructor sets the clock to midnight
+     * and the alarm to midnight and off.
+     */
+    public AlarmClock()
+    {
+        clock = new ClockDisplay12();
+        alarm = new Alarm();
+    }
+
+    /**
+     * Constructor for objects of class AlarmClock. This 
+     * constructor sets the clock and alarm to specified
+     * hours, minutes, am or pm, and whether alarm is
+     * on or off.
+     * 
+     * @param int cHour  hours to set clock time to
+     * @param int cMinute  minutes to set clock time to
+     * @param String cAmOrpm  set the clock time to am or pm
+     * @param int aHour  hours to set alarm time to
+     * @param int aMinute  minutes to set alarm time to
+     * @param String aAmOrpm  set the alarm time to am or pm
+     * @param boolean onOroff  set the alarm on or off
+     * 
+     */
+    public AlarmClock(int cHour, int cMinute, String cAmOrpm, int aHour, int aMinute, String aAmOrpm, boolean onOroff)
+    {
+        clock = new ClockDisplay12(cHour, cMinute, cAmOrpm);
+        alarm = new Alarm(aHour, aMinute, aAmOrpm, onOroff);
+    }
+    
+    /**
+     * Sets the time for the clock
+     *
+     * @param int hour  hours to set clock to
+     * @param int minute    minutes to set clock to
+     * @param String am_or_pm sets the clock to am or pm
+     */
+    public void setTime(int hour, int minute, String am_or_pm)
+    {
+        clock.setTime(hour, minute, am_or_pm);
+    }
+    
+    /**
+     * Sets the time for the alarm
+     *
+     * @param int hour  hours to set alarm to
+     * @param int minute    minutes to set alarm to
+     * @param String am_or_pm sets the alarm to am or pm
+     */
+    public void setAlarmTime(int hour, int minute, String am_or_pm)
+    {
+        alarm.setTime(hour, minute, am_or_pm);
+    }
+    
+    /**
+     * This method should get called once every minute - it makes
+     * the clock display go one minute forward.
+     * 
+     * If the clock ticks and is now equal to the time the alarm
+     * is set at and the alarm is on, system will print 
+     * "RING RING RING".
+     * 
+     */
+    public void clockTick()
+    {
+        clock.timeTick();
+        if ((clock.getTime().equals(alarm.getTime())) && (alarm.isSet())) {
+            System.out.println("RING RING RING");
+        }
+    }
+    
+    /**
+     * This method turns the alarm on
+     */
+    public void setAlarm()
+    {
+        alarm.turnOn();
+    }
+    
+    /**
+     * This method turns the alarm off
+     */
+    public void unsetAlarm()
+    {
+        alarm.turnOff();
+    }
+    
+    /**
+     * This method returns a String representing the current clock time.
+     * 
+     * @return string  returns string representation of clock time
+     */
+    public String getTime()
+    {
+        return clock.getTime();
+    }
+    
+    /**
+     * This method returns a String representing the current alarm time.
+     * 
+     * @return string  returns string representation of alarm time
+     */
+    public String getAlarmTime()
+    {
+        return alarm.getTime();
+    }
+    
+    /**
+     * Returns true if the alarm is set
+     * 
+     * @return boolean  returns true if alarm is on
+     */
+    public boolean isAlarmSet()
+    {
+        return alarm.isSet();
+    }
+}
